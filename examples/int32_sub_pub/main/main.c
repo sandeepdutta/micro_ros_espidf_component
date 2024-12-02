@@ -1,11 +1,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
-
+#define RMW_UXRCE_TRANSPORT_CUSTOM
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "esp_system.h"
+#include "driver/uart.h"
 
 #include <uros_network_interfaces.h>
 #include <rcl/rcl.h>
@@ -15,7 +16,9 @@
 #include <rclc/executor.h>
 
 #ifdef CONFIG_MICRO_ROS_ESP_XRCE_DDS_MIDDLEWARE
+#include <rmw_microxrcedds_c/config.h>
 #include <rmw_microros/rmw_microros.h>
+#include "esp32_serial_transport.h"
 #endif
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Aborting.\n",__LINE__,(int)temp_rc);vTaskDelete(NULL);}}
@@ -53,9 +56,13 @@ void micro_ros_task(void * arg)
 
 #ifdef CONFIG_MICRO_ROS_ESP_XRCE_DDS_MIDDLEWARE
 	rmw_init_options_t* rmw_options = rcl_init_options_get_rmw_init_options(&init_options);
+#if defined(RMW_UXRCE_TRANSPORT_CUSTOM)
 
+#else
 	// Static Agent IP and port can be used instead of autodisvery.
 	RCCHECK(rmw_uros_options_set_udp_address(CONFIG_MICRO_ROS_AGENT_IP, CONFIG_MICRO_ROS_AGENT_PORT, rmw_options));
+#endif  // RMW_UXRCE_TRANSPORT_CUSTOM
+
 	//RCCHECK(rmw_uros_discover_agent(rmw_options));
 #endif
 	// Setup support structure.
@@ -115,10 +122,18 @@ void micro_ros_task(void * arg)
 
 void app_main(void)
 {
-#if defined(CONFIG_MICRO_ROS_ESP_NETIF_WLAN) || defined(CONFIG_MICRO_ROS_ESP_NETIF_ENET)
-    ESP_ERROR_CHECK(uros_network_interface_initialize());
-#endif
-
+//#if defined(CONFIG_MICRO_ROS_ESP_NETIF_WLAN) || defined(CONFIG_MICRO_ROS_ESP_NETIF_ENET)
+//    ESP_ERROR_CHECK(uros_network_interface_initialize());
+//#endif
+	static size_t uart_port = UART_NUM_1;
+	rmw_uros_set_custom_transport(
+		true,
+		(void *) &uart_port,
+		esp32_serial_open,
+		esp32_serial_close,
+		esp32_serial_write,
+		esp32_serial_read
+	);
     //pin micro-ros task in APP_CPU to make PRO_CPU to deal with wifi:
     xTaskCreate(micro_ros_task,
             "uros_task",
