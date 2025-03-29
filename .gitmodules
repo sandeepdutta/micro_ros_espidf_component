@@ -1,0 +1,3 @@
+[submodule "jeeves_msgs"]
+	path = jeeves_msgs
+	url = git@github.com:sandeepdutta/jeeves_msgs.git
