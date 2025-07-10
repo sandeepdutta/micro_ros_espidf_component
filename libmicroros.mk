@@ -75,6 +75,7 @@ $(EXTENSIONS_DIR)/micro_ros_src/src:
 	git clone -b humble https://gitlab.com/ros-tracing/ros2_tracing src/ros2_tracing; \
 	git clone -b humble https://github.com/micro-ROS/micro_ros_utilities src/micro_ros_utilities; \
 	ln -s $(EXTENSIONS_DIR)/jeeves_msgs src/jeeves_msgs; \
+	ln -s $(EXTENSIONS_DIR)/audio_common_msgs src/audio_common_msgs; \
     touch src/rosidl/rosidl_typesupport_introspection_cpp/COLCON_IGNORE; \
     touch src/rcl_logging/rcl_logging_spdlog/COLCON_IGNORE; \
     touch src/rclc/rclc_examples/COLCON_IGNORE; \
